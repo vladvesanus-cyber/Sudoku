@@ -1,10 +1,26 @@
 /* Myslim ze 4/5*/
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 void v(int i, FILE *sudoku, FILE *hraci, FILE * rieseni);
 void h(FILE * rieseni);
 void n(FILE *sudoku, FILE *hraci, FILE * rieseni);
+
+char **sid_s;
+char **riesen_s;
+char **pid_h;
+char **meno_h;
+char **krajina_h;
+char **rok_h;
+char **gid_r;
+char **pid_r;
+char **sid_r;
+char **date_r;
+int *trvanie_r;
+int count_s;
+int count_h;
+int count_r;
 
 int main()
 {
@@ -16,6 +32,7 @@ int main()
     sudoku = fopen("Sudoku.txt", "r");/*Open files*/
     hraci = fopen("RegisterHracov.txt", "r");
     rieseni = fopen("RegisterRieseni.txt", "r");
+
     scanf("%c %d", &c, &i);  /*read the which function is called*/
     if(c == 'v')
     {
@@ -137,10 +154,159 @@ void h(FILE * rieseni)
 
 void n(FILE *sudoku, FILE *hraci, FILE * rieseni)
 {
+    char buffer[512];
+    int i;
     if (sudoku == NULL || hraci == NULL || rieseni == NULL)
     {
         printf("N:Neotvoreny subor.\n");
         return;
     }
-    
+    if (sid_s != NULL) {
+        int j;
+        for (j = 0; j < count_s; j++) {
+            free(sid_s[j]);
+            free(riesen_s[j]);
+        }
+        free(sid_s);
+        free(riesen_s);
+        sid_s = NULL;
+        riesen_s = NULL;
+    }
+
+    if (pid_h != NULL) {
+        int j;
+        for (j = 0; j < count_h; j++) {
+            free(pid_h[j]);
+            free(meno_h[j]);
+            free(krajina_h[j]);
+            free(rok_h[j]);
+        }
+        free(pid_h);
+        free(meno_h);
+        free(krajina_h);
+        free(rok_h);
+        pid_h = NULL;
+        meno_h = NULL;
+        krajina_h = NULL;
+        rok_h = NULL;
+    }
+
+    if (gid_r != NULL) {
+        int j;
+        for (j = 0; j < count_r; j++) {
+            free(gid_r[j]);
+            free(pid_r[j]);
+            free(sid_r[j]);
+            free(date_r[j]);
+        }
+        free(gid_r);
+        free(pid_r);
+        free(sid_r);
+        free(date_r);
+        free(trvanie_r);
+        gid_r = NULL;
+        pid_r = NULL;
+        sid_r = NULL;
+        date_r = NULL;
+        trvanie_r = NULL;
+    }  
+    /*Start read files from the start*/
+    rewind(sudoku);
+    rewind(hraci);
+    rewind(rieseni);
+    i = 0;
+    while(fgets(buffer, sizeof(buffer), sudoku) != NULL)
+    {
+        char *raw_sid;
+        char *raw_reseni;
+
+        raw_sid = strtok(buffer, "#");
+        raw_reseni = strtok(NULL, "#"); 
+        
+        sid_s = realloc(sid_s, (i + 1) * sizeof(char *));
+        riesen_s = realloc(riesen_s, (i + 1) * sizeof(char *));
+        
+        sid_s[i] = malloc(strlen(raw_sid) + 1);
+        strcpy(sid_s[i], raw_sid);
+        
+        riesen_s[i] = malloc(strlen(raw_reseni) + 1);
+        strcpy(riesen_s[i], raw_reseni);
+        i++;
+    }
+    count_s = i;
+    i = 0;
+    while(fgets(buffer, sizeof(buffer), hraci) != NULL)
+    {
+        char *pid_raw;
+        char *meno_raw;
+        char *krajina_raw;
+        char *rok_raw;
+        
+        pid_raw = strtok(buffer, "#");/*variable pid is every char in buffer that is limited by first #*/
+        meno_raw = strtok(NULL, "#");/*variable the same like pid but start from where pid is ended*/
+        krajina_raw = strtok(NULL, "#");
+        rok_raw = strtok(NULL, "#");
+        
+        pid_h = realloc(pid_h, (i + 1) * sizeof(char*));
+        meno_h = realloc(meno_h, (i + 1) * sizeof(char*));
+        krajina_h = realloc(krajina_h, (i + 1) * sizeof(char*));
+        rok_h = realloc(rok_h, (i + 1) * sizeof(char*));
+
+        pid_h[i] = malloc(strlen(pid_raw) + 1);
+        strcpy(pid_h[i], pid_raw);
+
+        meno_h[i] = malloc(strlen(meno_raw) + 1);
+        strcpy(meno_h[i], meno_raw);
+        
+        krajina_h[i] = malloc(strlen(krajina_raw) + 1);
+        strcpy(krajina_h[i], krajina_raw);
+
+        rok_h[i] = malloc(strlen(rok_raw) + 1);
+        strcpy(rok_h[i], rok_raw);
+        i++;
+    }
+    count_h = i;
+    i = 0;
+    while(fgets(buffer, sizeof(buffer), rieseni) != NULL)
+    {
+        char *gid_raw;
+        char *pid_raw;
+        char *sid_raw;
+        char *date_raw;
+        char *m_raw;
+        char *s_raw;
+        int m, s;
+        
+        gid_raw = strtok(buffer, "#");/*variable pid is every char in buffer that is limited by first #*/
+        pid_raw = strtok(NULL, "#");/*variable the same like pid but start from where pid is ended*/
+        sid_raw = strtok(NULL, "#");
+        date_raw = strtok(NULL, "#");
+        m_raw = strtok(NULL, "#");
+        s_raw = strtok(NULL, "#");
+        
+        gid_r = realloc(gid_r, (i + 1) * sizeof(char*));
+        pid_r = realloc(pid_r, (i + 1) * sizeof(char*));
+        sid_r = realloc(sid_r, (i + 1) * sizeof(char*));
+        date_r = realloc(date_r, (i + 1) * sizeof(char*));
+        trvanie_r = realloc(trvanie_r, (i + 1) * sizeof(int));
+
+        gid_r[i] = malloc(strlen(gid_raw) + 1);
+        strcpy(gid_r[i], gid_raw);
+
+        pid_r[i] = malloc(strlen(pid_raw) + 1);
+        strcpy(pid_r[i], pid_raw);
+        
+        sid_r[i] = malloc(strlen(sid_raw) + 1);
+        strcpy(sid_r[i], sid_raw);
+
+        date_r[i] = malloc(strlen(date_raw) + 1);
+        strcpy(date_r[i], date_raw);
+
+        m = atoi(m_raw);
+        s = atoi(s_raw);
+
+        trvanie_r[i] = m * 60 + s;
+        i++;
+    }
+    count_r = i;
 }
