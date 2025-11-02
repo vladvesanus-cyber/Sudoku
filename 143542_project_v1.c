@@ -6,6 +6,7 @@
 void v(int i, FILE *sudoku, FILE *hraci, FILE * rieseni);
 void h(FILE * rieseni);
 void n(FILE *sudoku, FILE *hraci, FILE * rieseni);
+void q(int i);
 
 char **sid_s;
 char **riesen_s;
@@ -45,6 +46,10 @@ int main()
     else if(c == 'n')
     {
         n(sudoku, hraci, rieseni);
+    }
+    else if(c == 'q')
+    {
+        q(i);
     }
     return 0;
 }
@@ -309,4 +314,112 @@ void n(FILE *sudoku, FILE *hraci, FILE * rieseni)
         i++;
     }
     count_r = i;
+}
+
+void q(int i)
+{
+    int j;
+    char s[16];
+    int n, m, sec;
+    if (gid_r == NULL)
+    {
+        printf("Q: Polia nie su vytvorene.\n");
+        return;
+    }
+    if (i > count_r)
+    {
+        n = count_r;
+    }
+    else
+    {
+        n = i - 1;
+    }
+    count_r++;
+
+    gid_r = realloc(gid_r, (count_r) * sizeof(char*));
+    pid_r = realloc(pid_r, (count_r) * sizeof(char*));
+    sid_r = realloc(sid_r, (count_r) * sizeof(char*));
+    date_r = realloc(date_r, (count_r) * sizeof(char*));
+    trvanie_r = realloc(trvanie_r, count_r * sizeof(int));
+    
+    for (j = count_r - 1; j > n; j--)
+    {
+        gid_r[j] = gid_r[j - 1];
+        pid_r[j] = pid_r[j - 1];
+        sid_r[j] = sid_r[j - 1];
+        date_r[j] = date_r[j - 1];
+        trvanie_r[j] = trvanie_r[j - 1];
+    }
+    while(1)
+    {
+        scanf("%s", s);
+        if ( strlen(s) == 7 && s[0] == 'G' && s[1] == 'I' && s[2] == 'D' &&
+        s[3] > 'a' && s[3] < 'z' &&
+        s[4] > '0' && s[4] < '9' &&
+        s[5] > '0' && s[5] < '9' &&
+        s[6] > '0' && s[6] < '9')
+        {
+        gid_r[n] = malloc(strlen(s) + 1);
+        break;
+        }
+        printf("Q: nespravny format vstupu, zadaj znova:");
+    }
+        strcpy(gid_r[n], s);
+
+    while(1)
+    {
+        scanf("%s", s);
+        if (strlen(s) == 9 && s[0] == 'P' && s[1] == 'I' && s[2] == 'D' &&
+        s[3] > 'a' && s[3] < 'z' &&
+        s[4] > '0' && s[4] < '9' &&
+        s[5] > '0' && s[5] < '9' &&
+        s[6] > '0' && s[6] < '9' &&
+        s[7] > '0' && s[7] < '9'&&
+        s[8] > '0' && s[8] < '9')
+        {
+        pid_r[n] = malloc(strlen(s) + 1);
+        break;
+        }
+        printf("Q: nespravny format vstupu, zadaj znova:");
+    }
+        strcpy(pid_r[n], s);
+
+    while(1)
+    {
+        scanf("%s", s);
+        if (strlen(s) == 8 && s[0] == 'S' && s[1] == 'I' && s[2] == 'D' &&
+        s[3] > 'A' && s[3] < 'Z' &&
+        s[4] > '0' && s[4] < '9' &&
+        s[5] > '0' && s[5] < '9' &&
+        s[6] > '0' && s[6] < '9' &&
+        s[7] > '0' && s[7] < '9')
+        {
+        sid_r[n] = malloc(strlen(s) + 1);
+        break;
+        }
+        printf("Q: nespravny format vstupu, zadaj znova:");
+    }
+        strcpy(sid_r[n], s);
+
+    while(1)
+    {
+        scanf("%s %d %d", s, &m, &sec);
+        if (strlen(s) == 8 && s[0] > '0' && s[0] < '9' &&
+        s[1] > '0' && s[1] < '9' &&
+        s[2] > '0' && s[2] < '9' &&
+        s[3] > '0' && s[3] < '9' &&
+        s[4] > '0' && s[4] < '9' &&
+        s[5] > '0' && s[5] < '9' &&
+        s[6] > '0' && s[6] < '9' &&
+        s[7] > '0' && s[7] < '9'&& 
+        m >= 0 && sec >= 0 && sec < 60 )
+        {
+            date_r[n] = malloc(strlen(s) + 1);
+            break;
+        }
+        printf("Q: nespravny format vstupu, zadaj znova:");
+    }
+        strcpy(date_r[n], s);
+
+        trvanie_r[n] = m * 60 + sec;
 }
