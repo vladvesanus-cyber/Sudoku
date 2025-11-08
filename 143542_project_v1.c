@@ -13,6 +13,7 @@ void q(int i, char ***gid_r ,char ***pid_r, char ***sid_r,
 char ***date_r, int **trvanie_r, int *count_r);
 void w(char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_r);
+void e(char ***sid_s, char ***riesen_s, int *count_s);
 
 int main()
 {
@@ -38,32 +39,48 @@ int main()
     sudoku = fopen("Sudoku.txt", "r");/* Open files */
     hraci = fopen("RegisterHracov.txt", "r");
     rieseni = fopen("RegisterRieseni.txt", "r");
-
-    scanf(" %c %d", &c, &i); /* read the which function is called */
-    if(c == 'v')
+    while(1)
     {
-        v(i, sudoku, hraci, rieseni);
-    }
-    else if(c == 'h')
-    {
-        h(rieseni);
-    }
-    else if(c == 'n')
-    {
-        n(sudoku, hraci, rieseni, &sid_s,
-        &riesen_s, &pid_h, &meno_h, &krajina_h, 
-        &rok_h, &gid_r, &pid_r, &sid_r, 
-        &date_r, &trvanie_r, &count_s, &count_h, &count_r);
-    }
-    else if(c == 'q')
-    {
-        q(i, &gid_r, &pid_r, &sid_r, 
-        &date_r, &trvanie_r, &count_r);
-    }
-    else if(c == 'w')
-    {
-        w(&gid_r, &pid_r, &sid_r, 
-        &date_r, &trvanie_r, &count_r);
+        scanf("%c", &c); /* read the which function is called */
+        if(c == 'v')
+        {
+            scanf("%d", &i);
+            if(i > 3)
+            {
+                printf("V: Nesprávna volba vypisu.");
+            }
+            v(i, sudoku, hraci, rieseni);
+        }
+        else if(c == 'h')
+        {
+            h(rieseni);
+        }
+        else if(c == 'n')
+        {
+            n(sudoku, hraci, rieseni, &sid_s,
+            &riesen_s, &pid_h, &meno_h, &krajina_h, 
+            &rok_h, &gid_r, &pid_r, &sid_r, 
+            &date_r, &trvanie_r, &count_s, &count_h, &count_r);
+        }
+        else if(c == 'q')
+        {
+            scanf("%d", &i);
+            q(i, &gid_r, &pid_r, &sid_r, 
+            &date_r, &trvanie_r, &count_r);
+        }
+        else if(c == 'w')
+        {
+            w(&gid_r, &pid_r, &sid_r, 
+            &date_r, &trvanie_r, &count_r);
+        }
+        else if(c == 'e')
+        {
+            e(&sid_s, &riesen_s, &count_s);
+        }
+        else if(c == 'k')
+        {
+            break;
+        }
     }
     return 0;
 }
@@ -196,43 +213,24 @@ char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r,
 char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r)
 {
     char buffer[512];
-    int i;
-    int j; 
+    int i, j; 
 
-    char *raw_sid_s;
-    char *raw_reseni_s;
-    char temp_sid_s[16];
-    char temp_reseni_s[500];
+    char *raw_sid_s, *raw_reseni_s; 
+    char **tm_sid_s, **tm_reseni_s;
 
-    char *pid_raw_h;
-    char *meno_raw_h;
-    char *krajina_raw_h;
-    char *rok_raw_h;
-    char temp_pid_h[16];
-    char temp_meno_h[100];
-    char temp_krajina_h[100];
-    char temp_rok_h[10];
+    char *pid_raw_h, *meno_raw_h, *krajina_raw_h, *rok_raw_h;
+    char **tm_pid_h, **tm_meno_h, **tm_krajina_h, **tm_rok_h;
 
-    char *gid_raw_r;
-    char *pid_raw_r;
-    char *sid_raw_r;
-    char *date_raw_r;
-    char *m_raw_r;
-    char *s_raw_r;
-    char temp_gid_r[16];
-    char temp_pid_r[16];
-    char temp_sid_r[16];
-    char temp_date_r[16];
-    char temp_m_r[10];
-    char temp_s_r[10];
-    int m_val;
-    int s_val;
+    char *gid_raw_r, *pid_raw_r, *sid_raw_r, *date_raw_r, *m_raw_r, *s_raw_r; 
+    char **tm_gid_r, **tm_pid_r, **tm_sid_r, **tm_date_r;
+    int *tm_trvanie_r, m_val, s_val;
 
     if (sudoku == NULL || hraci == NULL || rieseni == NULL)
     {
         printf("N:Neotvoreny subor.\n");
         return;
     }
+    
     if (*sid_s != NULL) {
         for (j = 0; j < *count_s; j++) {
             free((*sid_s)[j]); 
@@ -285,24 +283,41 @@ char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r)
     rewind(hraci);
     rewind(rieseni);
     i = 0;
+
     while(fgets(buffer, sizeof(buffer), sudoku) != NULL)
     {
         raw_sid_s = strtok(buffer, "#");
-        raw_reseni_s = strtok(NULL, "#"); 
+        raw_reseni_s = strtok(NULL, "#");
         
-        if (raw_sid_s == NULL || raw_reseni_s == NULL) continue;
+        if (raw_sid_s == NULL || raw_reseni_s == NULL)
+        {
+            continue;
+        }
+        if (raw_reseni_s != NULL) {
+         size_t len = strlen(raw_reseni_s);
+         while (len > 0 && (raw_reseni_s[len - 1] == ' ' || raw_reseni_s[len - 1] == '\n' || raw_reseni_s[len - 1] == '\r')) 
+            {
+             raw_reseni_s[--len] = '\0';
+            }
+        }
+        tm_sid_s = realloc(*sid_s, (i + 1) * sizeof(char *));
+        tm_reseni_s = realloc(*riesen_s, (i + 1) * sizeof(char *));
 
-        strcpy(temp_sid_s, raw_sid_s);
-        strcpy(temp_reseni_s, raw_reseni_s);
+        if(tm_sid_s != NULL && tm_reseni_s != NULL)
+        {
+            *sid_s = tm_sid_s;
+            *riesen_s = tm_reseni_s;
+        }
+        else
+        {
+            return;
+        }
         
-        *sid_s = realloc(*sid_s, (i + 1) * sizeof(char *));
-        *riesen_s = realloc(*riesen_s, (i + 1) * sizeof(char *));
-        
-        (*sid_s)[i] = malloc(strlen(temp_sid_s) + 1); 
-        strcpy((*sid_s)[i], temp_sid_s);
-        
-        (*riesen_s)[i] = malloc(strlen(temp_reseni_s) + 1); 
-        strcpy((*riesen_s)[i], temp_reseni_s);
+        (*sid_s)[i] = malloc(strlen(raw_sid_s) + 1); 
+        (*riesen_s)[i] = malloc(strlen(raw_reseni_s) + 1); 
+
+        strcpy((*sid_s)[i], raw_sid_s);
+        strcpy((*riesen_s)[i], raw_reseni_s);
         i++;
     }
     *count_s = i;
@@ -313,30 +328,44 @@ char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r)
         meno_raw_h = strtok(NULL, "#");
         krajina_raw_h = strtok(NULL, "#");
         rok_raw_h = strtok(NULL, "#");
+        if (rok_raw_h != NULL) {
+         size_t len = strlen(rok_raw_h);
+         while (len > 0 && (rok_raw_h[len - 1] == ' ' || rok_raw_h[len - 1] == '\n' || rok_raw_h[len - 1] == '\r')) 
+            {
+             rok_raw_h[--len] = '\0';
+            }
+        }
+        if (pid_raw_h == NULL || meno_raw_h == NULL || krajina_raw_h == NULL || rok_raw_h == NULL)
+        {
+            continue;
+        }
+        tm_pid_h = realloc(*pid_h, (i + 1) * sizeof(char*));
+        tm_meno_h = realloc(*meno_h, (i + 1) * sizeof(char*));
+        tm_krajina_h = realloc(*krajina_h, (i + 1) * sizeof(char*));
+        tm_rok_h = realloc(*rok_h, (i + 1) * sizeof(char*));
+
+        if(tm_pid_h != NULL && tm_meno_h != NULL && tm_krajina_h != NULL && tm_rok_h != NULL)
+        {
+            *pid_h = tm_pid_h;
+            *meno_h = tm_meno_h;
+            *krajina_h = tm_krajina_h;
+            *rok_h = tm_rok_h;
+        }
+        else
+        {
+            return;
+        }
+        (*pid_h)[i] = malloc(strlen(pid_raw_h) + 1); 
+
+        (*meno_h)[i] = malloc(strlen(meno_raw_h) + 1); 
         
-        if (pid_raw_h == NULL || meno_raw_h == NULL || krajina_raw_h == NULL || rok_raw_h == NULL) continue;
+        (*krajina_h)[i] = malloc(strlen(krajina_raw_h) + 1); 
 
-        strcpy(temp_pid_h, pid_raw_h);
-        strcpy(temp_meno_h, meno_raw_h);
-        strcpy(temp_krajina_h, krajina_raw_h);
-        strcpy(temp_rok_h, rok_raw_h);
-
-        *pid_h = realloc(*pid_h, (i + 1) * sizeof(char*));
-        *meno_h = realloc(*meno_h, (i + 1) * sizeof(char*));
-        *krajina_h = realloc(*krajina_h, (i + 1) * sizeof(char*));
-        *rok_h = realloc(*rok_h, (i + 1) * sizeof(char*));
-
-        (*pid_h)[i] = malloc(strlen(temp_pid_h) + 1); 
-        strcpy((*pid_h)[i], temp_pid_h);
-
-        (*meno_h)[i] = malloc(strlen(temp_meno_h) + 1); 
-        strcpy((*meno_h)[i], temp_meno_h);
-        
-        (*krajina_h)[i] = malloc(strlen(temp_krajina_h) + 1); 
-        strcpy((*krajina_h)[i], temp_krajina_h);
-
-        (*rok_h)[i] = malloc(strlen(temp_rok_h) + 1); 
-        strcpy((*rok_h)[i], temp_rok_h);
+        (*rok_h)[i] = malloc(strlen(rok_raw_h) + 1); 
+        strcpy((*pid_h)[i], pid_raw_h);
+        strcpy((*meno_h)[i], meno_raw_h);
+        strcpy((*krajina_h)[i], krajina_raw_h);
+        strcpy((*rok_h)[i], rok_raw_h);
         i++;
     }
     *count_h = i;
@@ -349,38 +378,50 @@ char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r)
         date_raw_r = strtok(NULL, "#");
         m_raw_r = strtok(NULL, "#");
         s_raw_r = strtok(NULL, "#");
+        if (s_raw_r != NULL) {
+         size_t len = strlen(s_raw_r);
+         while (len > 0 && (s_raw_r[len - 1] == ' ' || s_raw_r[len - 1] == '\n' || s_raw_r[len - 1] == '\r')) 
+            {
+             s_raw_r[--len] = '\0';
+            }
+        }
+        if (gid_raw_r == NULL || pid_raw_r == NULL || sid_raw_r == NULL || date_raw_r == NULL || m_raw_r == NULL || s_raw_r == NULL)
+        {
+            continue;
+        }
+        tm_gid_r = realloc(*gid_r, (i + 1) * sizeof(char*));
+        tm_pid_r = realloc(*pid_r, (i + 1) * sizeof(char*));
+        tm_sid_r = realloc(*sid_r, (i + 1) * sizeof(char*));
+        tm_date_r = realloc(*date_r, (i + 1) * sizeof(char*));
+        tm_trvanie_r = realloc(*trvanie_r, (i + 1) * sizeof(int));
+
+        if(tm_gid_r != NULL && tm_pid_r != NULL && tm_sid_r != NULL && tm_date_r != NULL && tm_trvanie_r != NULL)
+        {
+            *gid_r = tm_gid_r;
+            *pid_r = tm_pid_r;
+            *sid_r = tm_sid_r;
+            *date_r = tm_date_r;
+            *trvanie_r = tm_trvanie_r;
+        }
+        else
+        {
+            return;
+        }
+
+        (*gid_r)[i] = malloc(strlen(gid_raw_r) + 1); 
+
+        (*pid_r)[i] = malloc(strlen(pid_raw_r) + 1); 
         
-        if (gid_raw_r == NULL || pid_raw_r == NULL || sid_raw_r == NULL || date_raw_r == NULL || m_raw_r == NULL || s_raw_r == NULL) continue;
+        (*sid_r)[i] = malloc(strlen(sid_raw_r) + 1); 
 
-        strcpy(temp_gid_r, gid_raw_r);
-        strcpy(temp_pid_r, pid_raw_r);
-        strcpy(temp_sid_r, sid_raw_r);
-        strcpy(temp_date_r, date_raw_r);
-        strcpy(temp_m_r, m_raw_r);
-        strcpy(temp_s_r, s_raw_r);
-        
-        *gid_r = realloc(*gid_r, (i + 1) * sizeof(char*));
-        *pid_r = realloc(*pid_r, (i + 1) * sizeof(char*));
-        *sid_r = realloc(*sid_r, (i + 1) * sizeof(char*));
-        *date_r = realloc(*date_r, (i + 1) * sizeof(char*));
-        *trvanie_r = realloc(*trvanie_r, (i + 1) * sizeof(int));
-
-        (*gid_r)[i] = malloc(strlen(temp_gid_r) + 1); 
-        strcpy((*gid_r)[i], temp_gid_r);
-
-        (*pid_r)[i] = malloc(strlen(temp_pid_r) + 1); 
-        strcpy((*pid_r)[i], temp_pid_r);
-        
-        (*sid_r)[i] = malloc(strlen(temp_sid_r) + 1); 
-        strcpy((*sid_r)[i], temp_sid_r);
-
-        (*date_r)[i] = malloc(strlen(temp_date_r) + 1); 
-        strcpy((*date_r)[i], temp_date_r);
-
-        m_val = atoi(temp_m_r);
-        s_val = atoi(temp_s_r);
-
-        (*trvanie_r)[i] = m_val * 60 + s_val; 
+        (*date_r)[i] = malloc(strlen(date_raw_r) + 1); 
+        strcpy((*gid_r)[i], gid_raw_r);
+        strcpy((*pid_r)[i], pid_raw_r);
+        strcpy((*sid_r)[i], sid_raw_r);
+        strcpy((*date_r)[i], date_raw_r);
+        m_val = atoi(m_raw_r);
+        s_val = atoi(s_raw_r);
+        (*trvanie_r)[i] = m_val * 60 + s_val;
         i++;
     }
     *count_r = i;
@@ -570,4 +611,101 @@ char ***date_r, int **trvanie_r, int *count_r)
         *trvanie_r = tm_trvanie;
     }
     printf("W: Vymazalo sa : %d zaznamov !\n", total);
+}
+
+void e(char ***sid_s, char ***riesen_s, int *count_s)
+{
+    char sid[9], *rieseni;
+    int x, i, s, j, p, copy, t;
+    int r[5];
+    FILE *file;
+    s = -1;
+    if(!(*sid_s) || !(*riesen_s))
+    {
+        printf("E: Polia nie su vytvorene.");
+        return;
+    }
+    if(scanf("%s %d", sid, &x) != 2)
+    {
+        printf("E: Nespravny vstup.\n");
+        while (getchar() != '\n');
+        return;
+    }
+    while (getchar() != '\n');
+
+    if(x < 1 || x > 5)
+    {
+        printf("E: Nespravny vstup.\n");
+        return;
+    }
+    for(i = 0; i < *count_s; i++)
+    {
+        if(strcmp(sid, (*sid_s)[i]) == 0)
+        {
+            s = i;
+            break;
+        }
+    }
+    if (s == -1)
+    {
+        printf("E: Nespravny vstup.\n");
+        return;
+    }
+    rieseni = malloc(strlen((*riesen_s)[s]) + 1);
+    strcpy(rieseni,(*riesen_s)[s]);
+    rieseni[strlen((*riesen_s)[s])] = '\0';
+    file = fopen("Vystup_E.txt", "w");
+    if(file == NULL)
+    {
+        free(rieseni);
+        return;
+    }
+    for(i = 0; i < 9; i++)
+    {
+        do
+        {
+            copy = 0;
+            for(j = 0;  j < x; j++)
+            {
+                r[j] = rand() % 9;
+            }
+            for(j = 0; j < x; j++)
+            {
+                for(t = j + 1; t < x; t++)
+                {
+                    if(j != t)
+                    {
+                        if(r[j] == r[t])
+                        {
+                            copy = 1;
+                            break;
+                        }
+                    }
+                }
+                if(copy == 1)
+                {
+                    break;
+                }
+            }
+        }while(copy);
+        for(j = 0;  j < x; j++)
+        {
+            rieseni[i * 9 + r[j]] = '0';
+        }      
+        for(j = 0; j < 9; j++)
+        {
+            p = i * 9 + j;
+            if(rieseni[p] == '0')
+            {
+                fprintf(file, "| ");
+            }
+            else
+            {
+                fprintf(file,"|%c", rieseni[p]);
+            }
+        }
+        fprintf(file, "|\n");
+    }
+    fclose(file);
+    free(rieseni);
 }
