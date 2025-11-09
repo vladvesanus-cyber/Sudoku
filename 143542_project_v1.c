@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-void v(int i, FILE *sudoku, FILE *hraci, FILE * rieseni);
+void v1(FILE *sudoku, FILE *hraci, FILE * rieseni);
 void h(FILE * rieseni);
 void n(FILE *sudoku, FILE *hraci, FILE * rieseni,char ***sid_s,
 char ***riesen_s, char ***pid_h ,char ***meno_h ,char ***krajina_h, 
@@ -14,6 +14,9 @@ char ***date_r, int **trvanie_r, int *count_r);
 void w(char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_r);
 void e(char ***sid_s, char ***riesen_s, int *count_s);
+void v2(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
+char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
+char ***date_r, int **trvanie_r, int *count_h, int *count_r);
 
 int main()
 {
@@ -45,11 +48,20 @@ int main()
         if(c == 'v')
         {
             scanf("%d", &i);
-            if(i > 3)
+            if(i > 3 || i < 1)
             {
                 printf("V: Nesprávna volba vypisu.");
             }
-            v(i, sudoku, hraci, rieseni);
+            if(i == 1)
+            {
+                v1(sudoku, hraci, rieseni);
+            }
+            if(i == 2)
+            {
+                v2(&pid_h, &meno_h, &krajina_h, 
+                &rok_h, &gid_r, &pid_r, &sid_r, 
+                &date_r, &trvanie_r, &count_h, &count_r);
+            }
         }
         else if(c == 'h')
         {
@@ -85,83 +97,76 @@ int main()
     return 0;
 }
 
-void v(int i, FILE *sudoku, FILE *hraci, FILE * rieseni)
+void v1(FILE *sudoku, FILE *hraci, FILE * rieseni)
 {
-    if(i == 1)
-    {
-        char buffer[512]; /* buffer for read a hraci */
-        char *pid_raw;
-        char *meno;
-        char *krajina;
-        char *rok;
-        int j; 
-        char pid_copy[16];
-        char clean_pid_copy[16]; 
-        char buffer_copy[512]; 
-        char *pd; 
-        size_t len;
-        size_t pid_len;
+    char buffer[512]; /* buffer for read a hraci */
+    char *pid_raw;
+    char *meno;
+    char *krajina;
+    char *rok;
+    int j; 
+    char pid_copy[16];
+    char clean_pid_copy[16]; 
+    char buffer_copy[512]; 
+    char *pd; 
+    size_t len;
+    size_t pid_len;
         
-        if(!sudoku || !hraci || !rieseni)
-        {
-            sudoku = fopen("Sudoku.txt", "r");/* If not open then open it */
-            hraci = fopen("RegisterHracov.txt", "r");
-            rieseni = fopen("RegisterRieseni.txt", "r");
-        }
-        if(!sudoku || !hraci || !rieseni) /* Check if every file is open */
-        {
-            printf("V1: Neotvorene txt subory.\n");
-            return;
-        }
-        while(fgets(buffer, sizeof(buffer), hraci) != NULL)/* Read a riadok */
-        {
-            pid_raw = strtok(buffer, "#");/* variable pid is every char in buffer that is limited by first # */
-            meno = strtok(NULL, "#");/* variable the same like pid but start from where pid is ended */
-            krajina = strtok(NULL, "#");
-            rok = strtok(NULL, "#");
+    if(!sudoku || !hraci || !rieseni)
+    {
+        sudoku = fopen("Sudoku.txt", "r");/* If not open then open it */
+        hraci = fopen("RegisterHracov.txt", "r");
+        rieseni = fopen("RegisterRieseni.txt", "r");
+    }
+    if(!sudoku || !hraci || !rieseni) /* Check if every file is open */
+    {
+        printf("V1: Neotvorene txt subory.\n");
+        return;
+    }
+    while(fgets(buffer, sizeof(buffer), hraci) != NULL)/* Read a riadok */
+    {
+        pid_raw = strtok(buffer, "#");/* variable pid is every char in buffer that is limited by first # */
+        meno = strtok(NULL, "#");/* variable the same like pid but start from where pid is ended */
+        krajina = strtok(NULL, "#");
+        rok = strtok(NULL, "#");
 
-            /* copy the string pid_raw because we will rewrite buffer */
-            strcpy(pid_copy, pid_raw);
+        /* copy the string pid_raw because we will rewrite buffer */
+        strcpy(pid_copy, pid_raw);
 
-            printf("Identifikator: %s\n", pid_copy);/* print the result */
-            printf("Meno a prezvisko: %s\n", meno);
-            printf("Krajina: %s\n", krajina);
-            printf("Rok: %s\n", rok);
-            j = 0; /* counter of vzorkov */
-            rewind(rieseni); /* Go to the start of the file */
-            printf("Vzorka:\n");
-            while((fgets(buffer, sizeof(buffer), rieseni) != NULL) && j < 10)/* read from rieseni */
-            {
-                /* Make copy of bufer because strtok cut buffer to pid to compare */ 
-                strcpy(buffer_copy, buffer);
-                strtok(buffer, "#");
-                pd = strtok(NULL, "#");
+        printf("Identifikator: %s\n", pid_copy);/* print the result */
+        printf("Meno a prezvisko: %s\n", meno);
+        printf("Krajina: %s\n", krajina);
+        printf("Rok: %s\n", rok);
+        j = 0; /* counter of vzorkov */
+        rewind(rieseni); /* Go to the start of the file */
+        printf("Vzorka:\n");
+        while((fgets(buffer, sizeof(buffer), rieseni) != NULL) && j < 10)/* read from rieseni */
+        {
+            /* Make copy of bufer because strtok cut buffer to pid to compare */ 
+            strcpy(buffer_copy, buffer);
+            strtok(buffer, "#");
+            pd = strtok(NULL, "#");
                 
-                if (pd != NULL) {
-                    len = strlen(pd);
-                    while (len > 0 && (pd[len - 1] == ' ' || pd[len - 1] == '\n' || pd[len - 1] == '\r')) {
-                        pd[--len] = '\0';
-                    }
-                }
-                
-                strcpy(clean_pid_copy, pid_copy);
-                pid_len = strlen(clean_pid_copy);
-                while (pid_len > 0 && (clean_pid_copy[pid_len - 1] == ' ' || clean_pid_copy[pid_len - 1] == '\n' || clean_pid_copy[pid_len - 1] == '\r')) {
-                    clean_pid_copy[--pid_len] = '\0';
-                }
-
-                if (pd != NULL && strcmp(clean_pid_copy, pd) == 0)
-                {
-                    printf("\t%s", buffer_copy);
-                    j++;
+            if (pd != NULL) {
+                len = strlen(pd);
+                while (len > 0 && (pd[len - 1] == ' ' || pd[len - 1] == '\n' || pd[len - 1] == '\r')) {
+                    pd[--len] = '\0';
                 }
             }
-            printf("\n");/* The gap between players */
+                
+            strcpy(clean_pid_copy, pid_copy);
+            pid_len = strlen(clean_pid_copy);
+            while (pid_len > 0 && (clean_pid_copy[pid_len - 1] == ' ' || clean_pid_copy[pid_len - 1] == '\n' || clean_pid_copy[pid_len - 1] == '\r')) {
+                clean_pid_copy[--pid_len] = '\0';
+            }
+
+            if (pd != NULL && strcmp(clean_pid_copy, pd) == 0)
+            {
+                printf("\t%s", buffer_copy);
+                j++;
+            }
         }
-    }
-    else if(i == 2)
-    {
-        
+        printf("\n");/* The gap between players */
     }
 }
 
@@ -708,4 +713,36 @@ void e(char ***sid_s, char ***riesen_s, int *count_s)
     }
     fclose(file);
     free(rieseni);
+}
+
+void v2(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
+char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
+char ***date_r, int **trvanie_r, int *count_h, int *count_r)
+{
+    int i, j, n;
+    if(*pid_h == NULL || *gid_r == NULL)
+    {
+        printf("V2: Nenaplnene polia.\n");
+        return;
+    }
+    for (i = 0; i < *count_h; i++)
+    {
+        printf("PID: %s / %s / %s\n", (*pid_h)[i], (*rok_h)[i], (*krajina_h)[i]);
+        printf("Identita: %s\n", (*meno_h)[i]);
+        printf("Vysledok:\n");
+        j = 0;
+        for(n = 0; n < *count_r; n++)
+        {
+            if(strcmp((*pid_r)[n],(*pid_h)[i]) == 0)
+            {
+                printf("\t %s / %s / %s / %s / %c / %c / %d\n", (*gid_r)[n], (*pid_r)[n], (*sid_r)[n], (*date_r)[n], (*gid_r)[n][3], (*sid_r)[n][3],(*trvanie_r)[n]);
+                j++;
+            }
+            if(j == 10)
+            {
+                break;
+            }
+        }
+        printf("\n");
+    }
 }
