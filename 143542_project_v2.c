@@ -4,9 +4,27 @@
 #include <stdlib.h>
 #include <time.h>
 
-void v1(FILE *sudoku, FILE *hraci, FILE * rieseni);
-void h(FILE * rieseni);
-void n(FILE *sudoku, FILE *hraci, FILE * rieseni,char ***sid_s,
+typedef struct hraci_data{
+    char *PID;
+    char *Idendita;
+    char *Krajina;
+    int RokNar;
+    struct hraci_data *next;
+}HRACI_DATA;
+
+typedef struct rieseni_data{
+    char *SID;
+    char NarHry;
+    char *GID;
+    char NarSut;
+    char *DatHry;
+    int Trvanie;
+    struct rieseni_data *next;
+}RIESENI_DATA;
+
+void v1(FILE *sudoku, FILE *hraci, FILE *rieseni);
+void h(FILE *rieseni);
+void n(FILE *sudoku, FILE *hraci, FILE *rieseni,char ***sid_s,
 char ***riesen_s, char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r);
@@ -18,12 +36,15 @@ void e(char ***sid_s, char ***riesen_s, int *count_s);
 void v2(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_h, int *count_r);
+void m(FILE *sudoku, FILE *hraci, FILE *rieseni, HRACI_DATA *linked_hraci, RIESENI_DATA *linked_rieseni);
 
 int main()
 {
     FILE *sudoku;
     FILE *hraci;
     FILE *rieseni;
+    HRACI_DATA linked_hraci;
+    RIESENI_DATA linked_rieseni;
     char **sid_s = NULL; 
     char **riesen_s = NULL;
     char **pid_h = NULL;
@@ -44,6 +65,8 @@ int main()
     sudoku = fopen("Sudoku.txt", "r");/* Open files */
     hraci = fopen("RegisterHracov.txt", "r");
     rieseni = fopen("RegisterRieseni.txt", "r");
+    linked_hraci.PID = NULL;
+    linked_rieseni.SID = NULL;
     while(1)
     {
         scanf("%c", &c); /* read the which function is called */
@@ -90,6 +113,10 @@ int main()
         else if(c == 'e')
         {
             e(&sid_s, &riesen_s, &count_s);
+        }
+        else if(c == 'm')
+        {
+            m(sudoku, hraci, rieseni, &linked_hraci, &linked_rieseni);
         }
         else if(c == 'k')
         {
@@ -154,7 +181,6 @@ void v1(FILE *sudoku, FILE *hraci, FILE * rieseni)
     char clean_pid_copy[16]; 
     char buffer_copy[512]; 
     char *pd; 
-    size_t pid_len;
      
     rewind(sudoku);
     rewind(hraci);
@@ -195,7 +221,6 @@ void v1(FILE *sudoku, FILE *hraci, FILE * rieseni)
             pd = strtok(NULL, "#");
                 
             strcpy(clean_pid_copy, pid_copy);
-            pid_len = strlen(clean_pid_copy);
 
             if (pd != NULL && strcmp(clean_pid_copy, pd) == 0)
             {
@@ -744,4 +769,122 @@ char ***date_r, int **trvanie_r, int *count_h, int *count_r)
         }
         printf("\n");
     }
+}
+
+void m(FILE *sudoku, FILE *hraci, FILE * rieseni, HRACI_DATA *linked_hraci, RIESENI_DATA *linked_rieseni){
+    char buffer[512], temp[512];
+    char *pid_h, *idendita_h, *krajina_h, *rok_h;
+    char *gid_r, *sid_r, *data_r, *min, *sec;
+    HRACI_DATA *n, *tmp_n;
+    RIESENI_DATA *r, *tmp_r;
+    int rok, m, s, time, zaznamy;
+    if(!sudoku || !hraci || !rieseni){
+        printf("M: Neotvorene txt subory.\n");
+        return;
+    }
+
+    n = linked_hraci;
+    r =linked_rieseni;
+
+    if(linked_hraci->PID != NULL)
+    {
+        while(n != NULL){
+            tmp_n = n;
+            free(n->PID);
+            free(n->Idendita);
+            free(n->Krajina);
+            n = n->next;
+            if (tmp_n != linked_hraci){
+                free(tmp_n);
+            }
+        }    
+    }
+    if(linked_rieseni->SID != NULL)
+    {
+        while(r != NULL){
+            tmp_r = r;
+            free(r->SID);
+            free(r->GID);
+            free(r->DatHry);
+            r = r->next;
+            if(tmp_r != linked_rieseni){
+                free(tmp_r);
+            }
+        }
+    }
+    rewind(sudoku);
+    rewind(hraci);
+    rewind(rieseni);
+    
+    n = linked_hraci;
+    r =linked_rieseni;
+
+    zaznamy = 0;
+    while(fgets(buffer, sizeof(buffer), hraci) != NULL){
+        strcpy(temp, buffer);
+
+        pid_h = strtok(temp, "#");
+        idendita_h = strtok(NULL, "#");
+        krajina_h = strtok(NULL, "#");
+        rok_h = strtok(NULL, "#");
+        rok = atoi(rok_h);
+
+        n->PID = malloc(strlen(pid_h) + 1);
+        n->Idendita = malloc(strlen(idendita_h) + 1);
+        n->Krajina = malloc(strlen(krajina_h) + 1);
+
+        if(!n->PID || !n->Idendita || !n->Krajina){
+            return;
+        }
+
+        strcpy(n->PID, pid_h);
+        strcpy(n->Idendita, idendita_h);
+        strcpy(n->Krajina, krajina_h);
+        n->RokNar = rok;
+        n->next = NULL;
+        zaznamy++;
+        if(fgets(buffer, sizeof(buffer), hraci) != NULL){
+            n->next = malloc(sizeof(HRACI_DATA));
+            n = n->next;
+
+            fseek(hraci, -strlen(buffer), SEEK_CUR);
+        } 
+    }
+    
+    while(fgets(buffer, sizeof(buffer), rieseni) != NULL){
+        strcpy(temp, buffer);
+
+        gid_r = strtok(temp, "#");
+        strtok(NULL, "#");
+        sid_r = strtok(NULL, "#");
+        data_r = strtok(NULL, "#");
+        min = strtok(NULL, "#");
+        sec = strtok(NULL, "#");
+        m = atoi(min);
+        s = atoi(sec);
+        time = m*60 + s;
+
+        r->SID = malloc(strlen(sid_r) + 1);
+        r->GID = malloc(strlen(gid_r) + 1);
+        r->DatHry = malloc(strlen(data_r) + 1);
+
+        if(!r->SID || !r->GID || !r->DatHry){
+            return;
+        }
+        strcpy(r->SID, sid_r);
+        r->NarHry = sid_r[3];
+        strcpy(r->GID, gid_r);
+        r->NarSut = gid_r[3];
+        strcpy(r->DatHry, data_r);
+        r->Trvanie = time;
+        r->next = NULL;
+        zaznamy++; 
+        if(fgets(buffer, sizeof(buffer), rieseni) != NULL){
+            r->next = malloc(sizeof(RIESENI_DATA));
+            r = r->next;
+
+            fseek(rieseni, -strlen(buffer), SEEK_CUR);
+        } 
+    }
+    printf("M: Nacitalo sa %d zaznamov.\n", zaznamy);
 }
