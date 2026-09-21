@@ -1,4 +1,18 @@
-/* Myslim ze 4/5*/
+/*
+ * Sudoku Game Records Manager
+ *
+ * A command-driven C program that manages three linked datasets loaded from
+ * text files: sudoku puzzles/solutions, registered players, and individual
+ * game records (which player solved which puzzle, when, and how fast).
+ *
+ * The program reads single-character commands from stdin and dispatches to
+ * one of the functions below. Two parallel data representations are used
+ * on purpose, as required by the assignment:
+ *   - dynamic arrays (realloc-based) for the raw file data
+ *   - singly linked lists (HRACI_DATA / RIESENI_DATA) built from those arrays
+ *
+ * See README.md for the full command reference and build/run instructions.
+ */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -24,26 +38,26 @@ typedef struct hraci_data{
     struct hraci_data *next;
 }HRACI_DATA;
 
-void v1(FILE **sudoku, FILE **hraci, FILE **rieseni);
-void h(FILE *rieseni);
-void n(FILE *sudoku, FILE *hraci, FILE *rieseni,char ***sid_s,
+void print_players_with_sample_solutions(FILE **sudoku, FILE **hraci, FILE **rieseni);
+void export_solutions_by_sid(FILE *rieseni);
+void load_arrays_from_files(FILE *sudoku, FILE *hraci, FILE *rieseni,char ***sid_s,
 char ***riesen_s, char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r);
-void q(int i, char ***gid_r ,char ***pid_r, char ***sid_r, 
+void insert_solution_record(int i, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_r);
-void w(char ***gid_r ,char ***pid_r, char ***sid_r, 
+void delete_solution_records_by_pid(char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_r);
-void e(char ***sid_s, char ***riesen_s, int *count_s);
-void v2(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
+void generate_puzzle_with_gaps(char ***sid_s, char ***riesen_s, int *count_s);
+void print_players_with_solutions_arrays(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_h, int *count_r);
-void m(FILE *sudoku, FILE *hraci, FILE *rieseni, HRACI_DATA **linked_hraci, RIESENI_DATA **linked_rieseni);
-void a(HRACI_DATA **linked_hraci);
-void s(HRACI_DATA **linked_hraci, RIESENI_DATA **linkes_rieseni);
-void d(HRACI_DATA **linked_hraci);
-void v3(HRACI_DATA **linked_hraci);
-void k(FILE **sudoku, FILE **hraci, FILE **rieseni,char ***sid_s,
+void build_linked_lists_from_arrays(FILE *sudoku, FILE *hraci, FILE *rieseni, HRACI_DATA **linked_hraci, RIESENI_DATA **linked_rieseni);
+void add_player_to_list(HRACI_DATA **linked_hraci);
+void delete_solution_by_gid(HRACI_DATA **linked_hraci, RIESENI_DATA **linkes_rieseni);
+void sort_players_solutions_by_duration(HRACI_DATA **linked_hraci);
+void print_linked_players(HRACI_DATA **linked_hraci);
+void cleanup_and_exit(FILE **sudoku, FILE **hraci, FILE **rieseni,char ***sid_s,
 char ***riesen_s, char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int count_s, int count_h, int count_r, HRACI_DATA **linked_hraci, RIESENI_DATA **linked_rieseni);
@@ -86,26 +100,26 @@ int main()
             }
             if(i == 1)
             {
-                v1(&sudoku, &hraci, &rieseni);
+                print_players_with_sample_solutions(&sudoku, &hraci, &rieseni);
             }
             if(i == 2)
             {
-                v2(&pid_h, &meno_h, &krajina_h, 
+                print_players_with_solutions_arrays(&pid_h, &meno_h, &krajina_h, 
                 &rok_h, &gid_r, &pid_r, &sid_r, 
                 &date_r, &trvanie_r, &count_h, &count_r);
             }
             if(i == 3)
             {
-                v3(&linked_hraci);
+                print_linked_players(&linked_hraci);
             }
         }
         else if(c == 'h')
         {
-            h(rieseni);
+            export_solutions_by_sid(rieseni);
         }
         else if(c == 'n')
         {
-            n(sudoku, hraci, rieseni, &sid_s,
+            load_arrays_from_files(sudoku, hraci, rieseni, &sid_s,
             &riesen_s, &pid_h, &meno_h, &krajina_h, 
             &rok_h, &gid_r, &pid_r, &sid_r, 
             &date_r, &trvanie_r, &count_s, &count_h, &count_r);
@@ -113,37 +127,37 @@ int main()
         else if(c == 'q')
         {
             scanf("%d", &i);
-            q(i, &gid_r, &pid_r, &sid_r, 
+            insert_solution_record(i, &gid_r, &pid_r, &sid_r, 
             &date_r, &trvanie_r, &count_r);
         }
         else if(c == 'w')
         {
-            w(&gid_r, &pid_r, &sid_r, 
+            delete_solution_records_by_pid(&gid_r, &pid_r, &sid_r, 
             &date_r, &trvanie_r, &count_r);
         }
         else if(c == 'e')
         {
-            e(&sid_s, &riesen_s, &count_s);
+            generate_puzzle_with_gaps(&sid_s, &riesen_s, &count_s);
         }
         else if(c == 'm')
         {
-            m(sudoku, hraci, rieseni, &linked_hraci, &linked_rieseni);
+            build_linked_lists_from_arrays(sudoku, hraci, rieseni, &linked_hraci, &linked_rieseni);
         }
         else if(c == 'a')
         {
-            a(&linked_hraci);
+            add_player_to_list(&linked_hraci);
         }
         else if(c == 's')
         {
-            s(&linked_hraci, &linked_rieseni);
+            delete_solution_by_gid(&linked_hraci, &linked_rieseni);
         }
         else if(c == 'd')
         {
-            d(&linked_hraci);
+            sort_players_solutions_by_duration(&linked_hraci);
         }
         else if(c == 'k')
         {
-            k(&sudoku, &hraci, &rieseni, &sid_s,
+            cleanup_and_exit(&sudoku, &hraci, &rieseni, &sid_s,
             &riesen_s, &pid_h, &meno_h, &krajina_h,
             &rok_h, &gid_r, &pid_r, &sid_r,
             &date_r, &trvanie_r, count_s, count_h, count_r, &linked_hraci, &linked_rieseni);
@@ -153,7 +167,7 @@ int main()
     return 0;
 }
 
-void v1(FILE **sudoku, FILE **hraci, FILE **rieseni)
+void print_players_with_sample_solutions(FILE **sudoku, FILE **hraci, FILE **rieseni)
 {
     char buffer[512]; /* buffer for read a hraci */
     char *pid_raw;
@@ -216,7 +230,7 @@ void v1(FILE **sudoku, FILE **hraci, FILE **rieseni)
     }
 }
 
-void h(FILE *rieseni)
+void export_solutions_by_sid(FILE *rieseni)
 {
     char s[9];
     char buffer[512];/* buffer for reading the rieseni */
@@ -258,7 +272,7 @@ void h(FILE *rieseni)
     printf("H: Uspesne vytvoreny sumar.\n");
 }
 
-void n(FILE *sudoku, FILE *hraci, FILE * rieseni,char ***sid_s,
+void load_arrays_from_files(FILE *sudoku, FILE *hraci, FILE * rieseni,char ***sid_s,
 char ***riesen_s, char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r)
@@ -461,7 +475,7 @@ char ***date_r, int **trvanie_r, int *count_s, int *count_h, int *count_r)
     *count_r = i;
 }
 
-void q(int i, char ***gid_r ,char ***pid_r, char ***sid_r, 
+void insert_solution_record(int i, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_r)
 {
     int j;
@@ -582,7 +596,7 @@ char ***date_r, int **trvanie_r, int *count_r)
     }
 }
 
-void w(char ***gid_r ,char ***pid_r, char ***sid_r, 
+void delete_solution_records_by_pid(char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_r)
 {
     char s[16];
@@ -638,7 +652,7 @@ char ***date_r, int **trvanie_r, int *count_r)
     printf("W: Vymazalo sa : %d zaznamov !\n", total);
 }
 
-void e(char ***sid_s, char ***riesen_s, int *count_s)
+void generate_puzzle_with_gaps(char ***sid_s, char ***riesen_s, int *count_s)
 {
     char sid[9], *rieseni;
     int x, i, s, j, p, copy, t;
@@ -736,7 +750,7 @@ void e(char ***sid_s, char ***riesen_s, int *count_s)
     free(rieseni);
 }
 
-void v2(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
+void print_players_with_solutions_arrays(char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int *count_h, int *count_r)
 {
@@ -768,7 +782,7 @@ char ***date_r, int **trvanie_r, int *count_h, int *count_r)
     }
 }
 
-void m(FILE *sudoku, FILE *hraci, FILE * rieseni, HRACI_DATA **linked_hraci, RIESENI_DATA **linked_rieseni){
+void build_linked_lists_from_arrays(FILE *sudoku, FILE *hraci, FILE * rieseni, HRACI_DATA **linked_hraci, RIESENI_DATA **linked_rieseni){
     char buffer[512], temp[512];
     char *pid_h, *idendita_h, *krajina_h, *rok_h;
     char *gid_r, *pid_r, *sid_r, *data_r, *min, *sec;
@@ -919,7 +933,7 @@ void m(FILE *sudoku, FILE *hraci, FILE * rieseni, HRACI_DATA **linked_hraci, RIE
     printf("M: Nacitalo sa %d zaznamov.\n", zaznamy);
 }
 
-void a(HRACI_DATA **linked_hraci){
+void add_player_to_list(HRACI_DATA **linked_hraci){
     HRACI_DATA *n, *m, *tmp;
     int i, rok, j, order, last;
     char name[100], krajina[100],pid[10], number[6];
@@ -992,7 +1006,7 @@ void a(HRACI_DATA **linked_hraci){
     printf("A: Uspesne pridany zaznam na poziciu %d.\n", i);
 }
 
-void s(HRACI_DATA **linked_hraci, RIESENI_DATA **linkes_rieseni){
+void delete_solution_by_gid(HRACI_DATA **linked_hraci, RIESENI_DATA **linkes_rieseni){
     RIESENI_DATA *r, *tmp_r, *n, **vysledky;
     HRACI_DATA *h;
     char gid_r[8];
@@ -1044,7 +1058,7 @@ void s(HRACI_DATA **linked_hraci, RIESENI_DATA **linkes_rieseni){
     printf("S: Vymazalo sa: %d zaznamov!\n", i);
 }
 
-void d(HRACI_DATA **linked_hraci){
+void sort_players_solutions_by_duration(HRACI_DATA **linked_hraci){
     HRACI_DATA *n;
     RIESENI_DATA *r;
     int i, j;
@@ -1071,7 +1085,7 @@ void d(HRACI_DATA **linked_hraci){
     }
 }
 
-void v3(HRACI_DATA **linked_hraci){
+void print_linked_players(HRACI_DATA **linked_hraci){
     HRACI_DATA *n;
     int i;
     if (*linked_hraci == NULL){
@@ -1094,7 +1108,7 @@ void v3(HRACI_DATA **linked_hraci){
         printf("\n");
     }
 }
-void k(FILE **sudoku, FILE **hraci, FILE **rieseni,char ***sid_s,
+void cleanup_and_exit(FILE **sudoku, FILE **hraci, FILE **rieseni,char ***sid_s,
 char ***riesen_s, char ***pid_h ,char ***meno_h ,char ***krajina_h, 
 char ***rok_h, char ***gid_r ,char ***pid_r, char ***sid_r, 
 char ***date_r, int **trvanie_r, int count_s, int count_h, int count_r, HRACI_DATA **linked_hraci, RIESENI_DATA **linked_rieseni){
